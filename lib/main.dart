@@ -234,7 +234,7 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.info_outline),
-            label: 'About',
+            label: 'Bus Timetable Images',
           ),
         ],
       ),
