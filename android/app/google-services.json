@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "584069298155",
+    "project_id": "flutter-33a0f",
+    "storage_bucket": "flutter-33a0f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:584069298155:android:e891634371e8edd6218bae",
+        "android_client_info": {
+          "package_name": "com.example.bus_timetable_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgOWmCVG2Dq4nYCtZw7lP0z1TP_vUOd4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:584069298155:android:e9f1185a3753584b218bae",
+        "android_client_info": {
+          "package_name": "com.example.firstproject2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgOWmCVG2Dq4nYCtZw7lP0z1TP_vUOd4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
