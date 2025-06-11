@@ -1,1 +1,1 @@
-admin page == https://dreamy-souffle-9f7d47.netlify.app/
+admin page == https://meek-semifreddo-916b56.netlify.app/
