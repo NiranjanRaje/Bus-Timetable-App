@@ -39,6 +39,7 @@ class TimetableResults extends StatelessWidget {
               ),
             );
           }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           }
@@ -54,11 +55,22 @@ class TimetableResults extends StatelessWidget {
             );
           }
 
+          // Flatten documents so each time becomes a separate item
+          final allBusTimes = docs.expand((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final times = List<String>.from(data['times'] ?? []);
+            return times.map((time) => {
+              'from': data['from'],
+              'to': data['to'],
+              'time': time,
+            });
+          }).toList();
+
           return ListView.builder(
-            itemCount: docs.length,
+            itemCount: allBusTimes.length,
             padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
+              final bus = allBusTimes[index];
 
               return Card(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -69,11 +81,10 @@ class TimetableResults extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Top Row: From and To with bus icon in center
+                      // Top Row: From and To with bus icon
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // From station
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -87,7 +98,7 @@ class TimetableResults extends StatelessWidget {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                from ?? '',
+                                bus['from'],
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -96,15 +107,11 @@ class TimetableResults extends StatelessWidget {
                               ),
                             ],
                           ),
-
-                          // Bus icon
                           Icon(
                             Icons.directions_bus_filled,
                             size: 36,
                             color: Colors.blueAccent,
                           ),
-
-                          // To station
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
@@ -118,7 +125,7 @@ class TimetableResults extends StatelessWidget {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                to ?? '',
+                                bus['to'],
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -132,57 +139,22 @@ class TimetableResults extends StatelessWidget {
 
                       Divider(height: 24, thickness: 1),
 
-                      // Bus details
+                      // Bus number and time
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Bus number
                           Text(
-                            'Bus ${data['bus_number']}',
+                            'Time: ${bus['time']}',
                             style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
+                              fontSize: 16,
+                              color: Colors.grey[800],
                             ),
-                          ),
-
-                          // Departure and arrival times
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'Arrives: ${data['arrival_time']}',
-                                style: TextStyle(fontSize: 14, color: Colors.grey[800]),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Departs: ${data['departure_time']}',
-                                style: TextStyle(fontSize: 14, color: Colors.grey[800]),
-                              ),
-                            ],
                           ),
                         ],
                       ),
 
                       SizedBox(height: 12),
-
-                      // Days and notes
-                      Text(
-                        'Days: ${(data['days'] as List).join(", ")}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                      ),
-
-                      if (data['notes'] != null && (data['notes'] as String).isNotEmpty) ...[
-                        SizedBox(height: 8),
-                        Text(
-                          data['notes'],
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.blueGrey[700],
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
+                    
                     ],
                   ),
                 ),
