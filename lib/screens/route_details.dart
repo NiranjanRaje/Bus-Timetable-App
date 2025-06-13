@@ -57,16 +57,17 @@ class RouteDetails extends StatelessWidget {
             );
           }
 
+          // Now we fetch the 'stops' as a List of maps.
           final stops = routeData['stops'] as List<dynamic>;
-          final times = routeData['times'] as List<dynamic>;
 
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: ListView.builder(
               itemCount: stops.length,
               itemBuilder: (context, index) {
-                final stop = stops[index];
-                final time = times[index];
+                // Get each stop and time
+                final stop = stops[index]['stop'] as String;
+                final time = stops[index]['time'] as String;
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
