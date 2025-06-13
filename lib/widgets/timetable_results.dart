@@ -8,6 +8,15 @@ class TimetableResults extends StatelessWidget {
 
   const TimetableResults({Key? key, required this.from, required this.to}) : super(key: key);
 
+  // Function to capitalize every word in the string
+  String capitalizeEveryWord(String str) {
+    if (str.isEmpty) return str;
+    return str
+        .split(' ')   // Split the string into words by spaces
+        .map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1).toLowerCase() : '')  // Capitalize first letter of each word
+        .join(' ');  // Join the words back together with spaces
+  }
+
   @override
   Widget build(BuildContext context) {
     // If the 'from' or 'to' are null, show a prompt to the user
@@ -25,13 +34,17 @@ class TimetableResults extends StatelessWidget {
       );
     }
 
+    // Capitalize the 'from' and 'to' values before using them in the query
+    final capitalizedFrom = capitalizeEveryWord(from!);
+    final capitalizedTo = capitalizeEveryWord(to!);
+
     // Query the 'timetables' collection based on 'from' and 'to'
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('timetables') // Query the 'timetables' collection
-            .where('from', isEqualTo: from) // Filter by 'from' station
-            .where('to', isEqualTo: to) // Filter by 'to' station
+            .where('from', isEqualTo: capitalizedFrom) // Filter by 'from' station
+            .where('to', isEqualTo: capitalizedTo) // Filter by 'to' station
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
