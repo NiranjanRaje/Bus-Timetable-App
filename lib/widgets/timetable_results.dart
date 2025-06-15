@@ -75,12 +75,15 @@ class TimetableResults extends StatelessWidget {
           // Expand the timetable documents and map them to a list of bus times
           final allBusTimes = docs.expand((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            final times = List<String>.from(data['times'] ?? []);
-            return times.map((time) => {
-              'from': data['from'],
-              'to': data['to'],
-              'time': time,
-              'route_id': data['route_id'], // This links the timetable to a route
+            final timesList = List<Map<String, dynamic>>.from(data['times'] ?? []);
+
+            return timesList.map((timeData) {
+              return {
+                'from': data['from'],
+                'to': data['to'],
+                'time': timeData['time'], // Access time directly from the map
+                'route_id': timeData['route_id'], // Access route_id directly from the map
+              };
             });
           }).toList();
 
