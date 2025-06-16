@@ -1,5 +1,5 @@
-name: My Bus
-description: "A Bus Timetable App."
+name: bus_timetable_app
+description: "A new Flutter project."
 
 publish_to: 'none'
 
