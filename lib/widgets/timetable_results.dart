@@ -8,165 +8,75 @@ class TimetableResults extends StatelessWidget {
 
   const TimetableResults({Key? key, required this.from, required this.to}) : super(key: key);
 
-  // Function to capitalize every word in the string
   String capitalizeEveryWord(String str) {
     if (str.isEmpty) return str;
-    return str
-        .split(' ')   // Split the string into words by spaces
-        .map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1).toLowerCase() : '')  // Capitalize first letter of each word
-        .join(' ');  // Join the words back together with spaces
+    return str.split(' ').map((word) => word.isNotEmpty
+        ? word[0].toUpperCase() + word.substring(1).toLowerCase() : '').join(' ');
   }
 
   @override
   Widget build(BuildContext context) {
-    // If the 'from' or 'to' are null, show a prompt to the user
     if (from == null || to == null) {
-      return Expanded(
-        child: Center(
-          child: Text(
-            'Enter stations and tap "Find Bus"',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-        ),
-      );
+      return const Expanded(child: Center(child: Text('Enter stations and tap "Find Bus"')));
     }
 
-    // Capitalize the 'from' and 'to' values before using them in the query
-    final capitalizedFrom = capitalizeEveryWord(from!);
-    final capitalizedTo = capitalizeEveryWord(to!);
+    final capitalizedFrom = capitalizeEveryWord(from!.trim());
+    final capitalizedTo = capitalizeEveryWord(to!.trim());
 
-    // Query the 'timetables' collection based on 'from' and 'to'
     return Expanded(
       child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('timetables') // Query the 'timetables' collection
-            .where('from', isEqualTo: capitalizedFrom) // Filter by 'from' station
-            .where('to', isEqualTo: capitalizedTo) // Filter by 'to' station
-            .snapshots(),
+        stream: FirebaseFirestore.instance.collection('timetable')
+            .where('from', isEqualTo: capitalizedFrom)
+            .where('to', isEqualTo: capitalizedTo).snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading data',
-                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-              ),
-            );
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) return const Center(child: Text('Error loading data'));
 
           final docs = snapshot.data!.docs;
+          if (docs.isEmpty) return Center(child: Text('No buses found from $capitalizedFrom to $capitalizedTo'));
 
-          // If no results found, show a message
-          if (docs.isEmpty) {
-            return Center(
-              child: Text(
-                'No buses found from $from to $to',
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              ),
-            );
-          }
-
-          // Expand the timetable documents and map them to a list of bus times
-          final allBusTimes = docs.expand((doc) {
+          final List<Map<String, dynamic>> allBusTimes = docs.expand((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            final timesList = List<Map<String, dynamic>>.from(data['times'] ?? []);
-
-            return timesList.map((timeData) {
-              return {
-                'from': data['from'],
-                'to': data['to'],
-                'time': timeData['time'], // Access time directly from the map
-                'route_id': timeData['route_id'], // Access route_id directly from the map
-              };
+            final departuresList = List<String>.from(data['departures'] ?? []);
+            return departuresList.map((time) => {
+              'from': data['from'], 'to': data['to'], 'time': time,
+              'service_type': data['service_type'] ?? 'Regular',
+              'category': data['category'] ?? 'Rural',
+              'depot': data['depot'] ?? 'Satara', 'route_id': doc.id,
             });
           }).toList();
 
-          // Build the list view to display all the bus times
+          allBusTimes.sort((a, b) => a['time'].compareTo(b['time']));
+
           return ListView.builder(
             itemCount: allBusTimes.length,
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             itemBuilder: (context, index) {
               final bus = allBusTimes[index];
-
               return GestureDetector(
-                onTap: () {
-                  // When an item is clicked, navigate to the RouteDetails page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RouteDetails(
-                        routeId: bus['route_id'], // Pass the route_id to RouteDetails
-                      ),
-                    ),
-                  );
-                },
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => RouteDetails(routeId: bus['route_id']))),
                 child: Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 4,
-                  margin: EdgeInsets.symmetric(vertical: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'From',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  bus['from'],
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-                                ),
-                              ],
-                            ),
-                            Icon(
-                              Icons.directions_bus_filled,
-                              size: 36,
-                              color: Colors.blueAccent,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'To',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  bus['to'],
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Divider(height: 24, thickness: 1),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Time: ${bus['time']}',
-                              style: TextStyle(fontSize: 16, color: Colors.grey[800]),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 12),
-                      ],
-                    ),
-                  ),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(padding: const EdgeInsets.all(16), child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Text("Depot: ${bus['depot']}", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+                        Text(bus['category'], style: const TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
+                      ]),
+                      const SizedBox(height: 12),
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        _buildCol('From', bus['from']),
+                        const Icon(Icons.directions_bus_filled, size: 32, color: Colors.blueAccent),
+                        _buildCol('To', bus['to'], end: true),
+                      ]),
+                      const Divider(height: 24),
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Text('Time: ${bus['time']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(bus['service_type'], style: TextStyle(color: bus['service_type'].contains('Non-Stop') ? Colors.red : Colors.green, fontWeight: FontWeight.bold)),
+                      ]),
+                    ],
+                  )),
                 ),
               );
             },
@@ -174,5 +84,12 @@ class TimetableResults extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _buildCol(String label, String name, {bool end = false}) {
+    return Column(crossAxisAlignment: end ? CrossAxisAlignment.end : CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(fontSize: 12)),
+      Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+    ]);
   }
 }
