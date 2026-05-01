@@ -1,16 +1,13 @@
-# bus_timetable_app
 
-A new Flutter project.
+---
 
-## Getting Started
+# 🚌 Bus Timetable App
 
-This project is a starting point for a Flutter application.
+A robust Flutter-based mobile solution designed to bring traditional bus schedules into the digital age. This app provides commuters with instant access to **original timetable images** and detailed **route information** with minimal navigation.
 
-A few resources to get you started if this is your first Flutter project:
+## 🌟 Core Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+*   **Original Timetable Archive:** View original scans of official bus timetables. No more guessing—see the exact data provided by the transport authorities.
+*   **Two-Click Routing:** Get from the home screen to your specific route information in just two clicks.
+*   **Comprehensive Route Details:** View a complete list of stops travel for every line.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
