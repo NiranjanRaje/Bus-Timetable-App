@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class BusSearchForm extends StatefulWidget {
   final Function(String from, String to) onSearch;
+  final List<String> stations; // ✅ Added required parameter
 
-  const BusSearchForm({Key? key, required this.onSearch}) : super(key: key);
+  const BusSearchForm({
+    Key? key,
+    required this.onSearch,
+    required this.stations, // ✅ Required in constructor
+  }) : super(key: key);
 
   @override
   _BusSearchFormState createState() => _BusSearchFormState();
@@ -26,26 +31,19 @@ class _BusSearchFormState extends State<BusSearchForm> {
 
     if (from.isEmpty || to.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill both stations')),
+        const SnackBar(content: Text('Please fill both stations')),
       );
       return;
     }
-
-    widget.onSearch(from, to); // Call the onSearch function passed from the parent
+    widget.onSearch(from, to);
   }
 
   void _swapStations() {
-    final temp = _fromController.text;
-    _fromController.text = _toController.text;
-    _toController.text = temp;
-  }
-
-  void _clearFromText() {
-    _fromController.clear();
-  }
-
-  void _clearToText() {
-    _toController.clear();
+    setState(() {
+      final temp = _fromController.text;
+      _fromController.text = _toController.text;
+      _toController.text = temp;
+    });
   }
 
   @override
@@ -54,85 +52,94 @@ class _BusSearchFormState extends State<BusSearchForm> {
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       child: Card(
         elevation: 5,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              // "From Station" TextField with Remove Text Button
-              TextField(
+              _buildAutocompleteField(
+                hint: 'From Station',
+                icon: Icons.train,
                 controller: _fromController,
-                decoration: InputDecoration(
-                  hintText: 'From Station',
-                  prefixIcon: Icon(Icons.train),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.clear),
-                    onPressed: _clearFromText, // Clears the text
-                  ),
-                  border: InputBorder.none, // Remove border
-                ),
               ),
-              SizedBox(height: 20),
-
-              // Divider Line through Swap Button
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Divider(
-                      color: Colors.blue, // Blue line
-                      thickness: 1.5,
-                    ),
-                  ),
+                  const Expanded(child: Divider(color: Colors.blue, thickness: 1.5)),
                   OutlinedButton(
                     onPressed: _swapStations,
-                    child: Icon(Icons.swap_vert, color: Colors.blue),
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.all(8),
-                      side: BorderSide(color: Colors.blue),
-                      shape: CircleBorder(),
+                      padding: const EdgeInsets.all(8),
+                      side: const BorderSide(color: Colors.blue),
+                      shape: const CircleBorder(),
                     ),
+                    child: const Icon(Icons.swap_vert, color: Colors.blue),
                   ),
-                  Expanded(
-                    child: Divider(
-                      color: Colors.blue, // Blue line
-                      thickness: 1.5,
-                    ),
-                  ),
+                  const Expanded(child: Divider(color: Colors.blue, thickness: 1.5)),
                 ],
               ),
-              SizedBox(height: 20),
-
-              // "To Station" TextField with Remove Text Button
-              TextField(
+              const SizedBox(height: 20),
+              _buildAutocompleteField(
+                hint: 'To Station',
+                icon: Icons.train_outlined,
                 controller: _toController,
-                decoration: InputDecoration(
-                  hintText: 'To Station',
-                  prefixIcon: Icon(Icons.train_outlined),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.clear),
-                    onPressed: _clearToText, // Clears the text
-                  ),
-                  border: InputBorder.none, // Remove border
-                ),
               ),
-              SizedBox(height: 24),
-
-              // Find Bus Button inside the card
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _search,
-                  child: Text('Find Bus'),
+                  child: const Text('Find Bus'),
                 ),
               ),
-              SizedBox(height: 16),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAutocompleteField({
+    required String hint,
+    required IconData icon,
+    required TextEditingController controller,
+  }) {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+        return widget.stations.where((String option) {
+          return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+        });
+      },
+      fieldViewBuilder: (context, fieldController, focusNode, onFieldSubmitted) {
+        // Sync internal Autocomplete controller with your master controller
+        if (fieldController.text != controller.text) {
+          fieldController.text = controller.text;
+        }
+
+        return TextField(
+          controller: fieldController,
+          focusNode: focusNode,
+          onChanged: (val) => controller.text = val,
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                fieldController.clear();
+                controller.clear();
+                setState(() {});
+              },
+            ),
+            border: InputBorder.none,
+          ),
+        );
+      },
+      onSelected: (String selection) {
+        controller.text = selection;
+      },
     );
   }
 }
