@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BusSearchForm extends StatefulWidget {
-  final Function(String from, String to) onSearch;
-  final List<String> stations; // ✅ Added required parameter
+  final Future<void> Function(String from, String to) onSearch;
+  final List<String> stations;
 
   const BusSearchForm({
     Key? key,
     required this.onSearch,
-    required this.stations, // ✅ Required in constructor
+    required this.stations,
   }) : super(key: key);
 
   @override
@@ -15,8 +16,92 @@ class BusSearchForm extends StatefulWidget {
 }
 
 class _BusSearchFormState extends State<BusSearchForm> {
-  final _fromController = TextEditingController();
-  final _toController = TextEditingController();
+  late TextEditingController _fromController;
+  late TextEditingController _toController;
+  bool _hasSavedFrom = false;
+  bool _hasSavedTo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fromController = TextEditingController();
+    _toController = TextEditingController();
+    _loadSavedValues();
+  }
+
+  Future<void> _loadSavedValues() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSavedFrom = prefs.containsKey('search_form_from');
+      final hasSavedTo = prefs.containsKey('search_form_to');
+
+      final savedFrom = prefs.getString('search_form_from') ?? '';
+      final savedTo = prefs.getString('search_form_to') ?? '';
+      debugPrint('📥 Loaded from SharedPreferences - From: "$savedFrom", To: "$savedTo"');
+
+      _hasSavedFrom = savedFrom.isNotEmpty;
+      _hasSavedTo = savedTo.isNotEmpty;
+
+      // Restore saved values only (no fallback to initialFrom)
+      // If nothing is saved, show blank (invalid searches clear the prefs)
+      final finalFrom = savedFrom.isNotEmpty ? savedFrom : '';
+      final finalTo = savedTo.isNotEmpty ? savedTo : '';
+
+      _fromController = TextEditingController(text: finalFrom);
+      _toController = TextEditingController(text: finalTo);
+      debugPrint('✅ Form initialized - From: "$finalFrom", To: "$finalTo"');
+
+      setState(() {});
+    } catch (e) {
+      debugPrint('❌ Error loading saved values: $e');
+      _fromController = TextEditingController(text: '');
+      _toController = TextEditingController(text: '');
+      setState(() {});
+    }
+  }
+
+  String? _findMatchingStation(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    for (final station in widget.stations) {
+      if (station.toLowerCase() == normalized) {
+        return station;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _saveFormValues(String from, String to) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final matchedFrom = _findMatchingStation(from);
+      final matchedTo = _findMatchingStation(to);
+
+      if (matchedFrom != null) {
+        await prefs.setString('search_form_from', matchedFrom);
+        _hasSavedFrom = true;
+        debugPrint('✅ Saved search_form_from: "$matchedFrom"');
+      } else {
+        await prefs.remove('search_form_from');
+        _hasSavedFrom = false;
+        debugPrint('⚠️ Cleared search_form_from because it did not match suggestions');
+      }
+
+      if (matchedTo != null) {
+        await prefs.setString('search_form_to', matchedTo);
+        _hasSavedTo = true;
+        debugPrint('✅ Saved search_form_to: "$matchedTo"');
+      } else {
+        await prefs.remove('search_form_to');
+        _hasSavedTo = false;
+        debugPrint('⚠️ Cleared search_form_to because it did not match suggestions');
+      }
+    } catch (e) {
+      debugPrint('❌ Error saving form values: $e');
+    }
+  }
+
+
 
   @override
   void dispose() {
@@ -25,9 +110,17 @@ class _BusSearchFormState extends State<BusSearchForm> {
     super.dispose();
   }
 
-  void _search() {
+  Future<void> _clearSavedValues() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('search_form_from');
+    await prefs.remove('search_form_to');
+  }
+
+  Future<void> _search() async {
     final from = _fromController.text.trim();
     final to = _toController.text.trim();
+
+    debugPrint('🔍 Search clicked - From: "$from", To: "$to"');
 
     if (from.isEmpty || to.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +128,10 @@ class _BusSearchFormState extends State<BusSearchForm> {
       );
       return;
     }
-    widget.onSearch(from, to);
+
+    await _saveFormValues(from, to);
+    debugPrint('➡️ Calling onSearch callback...');
+    await widget.onSearch(from, to);
   }
 
   void _swapStations() {
@@ -61,6 +157,7 @@ class _BusSearchFormState extends State<BusSearchForm> {
                 hint: 'From Station',
                 icon: Icons.train,
                 controller: _fromController,
+                storageKey: 'search_form_from',
               ),
               const SizedBox(height: 20),
               Row(
@@ -84,6 +181,7 @@ class _BusSearchFormState extends State<BusSearchForm> {
                 hint: 'To Station',
                 icon: Icons.train_outlined,
                 controller: _toController,
+                storageKey: 'search_form_to',
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -104,6 +202,7 @@ class _BusSearchFormState extends State<BusSearchForm> {
     required String hint,
     required IconData icon,
     required TextEditingController controller,
+    required String storageKey,
   }) {
     return Autocomplete<String>(
       optionsBuilder: (TextEditingValue textEditingValue) {
@@ -113,11 +212,9 @@ class _BusSearchFormState extends State<BusSearchForm> {
         });
       },
       fieldViewBuilder: (context, fieldController, focusNode, onFieldSubmitted) {
-        // Sync internal Autocomplete controller with your master controller
-        if (fieldController.text != controller.text) {
-          fieldController.text = controller.text;
-        }
-
+        // Initialize field controller with master controller value
+        fieldController.text = controller.text;
+        
         return TextField(
           controller: fieldController,
           focusNode: focusNode,
@@ -127,9 +224,18 @@ class _BusSearchFormState extends State<BusSearchForm> {
             prefixIcon: Icon(icon),
             suffixIcon: IconButton(
               icon: const Icon(Icons.clear),
-              onPressed: () {
+              onPressed: () async {
                 fieldController.clear();
                 controller.clear();
+                // Clear saved values when clearing the field
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove(storageKey);
+                // Update saved flags
+                if (storageKey == 'search_form_from') {
+                  _hasSavedFrom = false;
+                } else if (storageKey == 'search_form_to') {
+                  _hasSavedTo = false;
+                }
                 setState(() {});
               },
             ),
@@ -137,8 +243,15 @@ class _BusSearchFormState extends State<BusSearchForm> {
           ),
         );
       },
-      onSelected: (String selection) {
+      onSelected: (String selection) async {
         controller.text = selection;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(storageKey, selection);
+        if (storageKey == 'search_form_from') {
+          _hasSavedFrom = true;
+        } else if (storageKey == 'search_form_to') {
+          _hasSavedTo = true;
+        }
       },
     );
   }

@@ -126,11 +126,20 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     elevation: 3,
                   ),
                   child: _isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                        )
                       : const Text(
-                      "SUBMIT FEEDBACK",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
-                  ),
+                          "SUBMIT FEEDBACK",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
                 ),
               ),
             ],

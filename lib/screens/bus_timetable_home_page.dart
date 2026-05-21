@@ -245,13 +245,13 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text('Recently viewed trips', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text('Recently visited route', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Expanded(
                       child: ListView.builder(
-                        itemCount: _recentSelections.length,
+                        itemCount: 1,
                         itemBuilder: (context, index) {
                           final route = _recentSelections[index];
                           final routeText = '${route['from']} → ${route['to']}';

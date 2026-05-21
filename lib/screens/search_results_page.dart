@@ -68,26 +68,34 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<SortOption>(
-                dropdownColor: Colors.white,
-                value: _selectedSort,
-                style: const TextStyle(fontSize: 12, color: Colors.black),
-                iconSize: 18,
-                underline: const SizedBox.shrink(),
-                items: SortOption.values.map((option) {
-                  return DropdownMenuItem<SortOption>(
-                    value: option,
-                    child: Text(option.label, style: const TextStyle(fontSize: 12)),
-                  );
-                }).toList(),
-                onChanged: (SortOption? newOption) {
-                  if (newOption == null) return;
-                  setState(() {
-                    _selectedSort = newOption;
-                  });
-                },
+            padding: const EdgeInsets.only(right: 12, top: 14, bottom: 14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<SortOption>(
+                  dropdownColor: Colors.white,
+                  value: _selectedSort,
+                  style: const TextStyle(fontSize: 12, color: Colors.black),
+                  icon: const Icon(Icons.sort, color: Colors.black),
+                  iconSize: 20,
+                  underline: const SizedBox.shrink(),
+                  items: SortOption.values.map((option) {
+                    return DropdownMenuItem<SortOption>(
+                      value: option,
+                      child: Text(option.label, style: const TextStyle(fontSize: 12, color: Colors.black)),
+                    );
+                  }).toList(),
+                  onChanged: (SortOption? newOption) {
+                    if (newOption == null) return;
+                    setState(() {
+                      _selectedSort = newOption;
+                    });
+                  },
+                ),
               ),
             ),
           ),
