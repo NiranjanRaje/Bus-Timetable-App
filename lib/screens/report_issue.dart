@@ -116,7 +116,16 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                   onPressed: _isSubmitting ? null : _submitReport,
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                   child: _isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                        )
                       : const Text("SUBMIT REPORT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
