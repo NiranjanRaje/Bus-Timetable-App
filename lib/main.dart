@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:bus_timetable_app/screens/bus_timetable_home_page.dart';
+import 'package:bus_timetable_app/utils/route_observer.dart';
 import 'package:bus_timetable_app/screens/splash_screen.dart'; 
 
 void main() async {
@@ -53,6 +54,7 @@ class BusTimetableApp extends StatelessWidget {
           ),
         ),
       ),
+      navigatorObservers: [routeObserver],
       home: SplashScreen(), 
     );
   }
