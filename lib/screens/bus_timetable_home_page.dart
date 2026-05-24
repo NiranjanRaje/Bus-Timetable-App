@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -9,6 +10,7 @@ import 'package:bus_timetable_app/screens/feedback_page.dart';
 import 'package:bus_timetable_app/screens/route_details.dart';
 import 'package:bus_timetable_app/screens/search_results_page.dart';
 import 'package:bus_timetable_app/utils/route_observer.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class BusTimetableHomePage extends StatefulWidget {
   @override
@@ -16,14 +18,28 @@ class BusTimetableHomePage extends StatefulWidget {
 }
 
 class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteAware {
+  static const String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  // ignore: unused_field
+  static const String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
+  // ignore: unused_field
+  static const String _rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+
   int _selectedIndex = 0;
   List<String> _allStations = [];
   List<Map<String, String>> _recentSelections = [];
+  BannerAd? _bannerAd;
+  bool _isBannerAdReady = false;
+  bool _bannerLoadFailed = false;
 
   @override
   void initState() {
     super.initState();
     _initStations();
+    if (!kIsWeb) {
+      _createBannerAd();
+    } else {
+      _bannerLoadFailed = true;
+    }
   }
 
   @override
@@ -38,8 +54,34 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
 
   @override
   void dispose() {
+    _bannerAd?.dispose();
     routeObserver.unsubscribe(this);
     super.dispose();
+  }
+
+  void _createBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: _bannerAdUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          debugPrint('BannerAd loaded successfully');
+          setState(() {
+            _isBannerAdReady = true;
+            _bannerLoadFailed = false;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('BannerAd failed to load: $error');
+          ad.dispose();
+          setState(() {
+            _bannerLoadFailed = true;
+            _isBannerAdReady = false;
+          });
+        },
+      ),
+    )..load();
   }
 
   @override
@@ -276,8 +318,9 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
                                   'depot': route['depot'] ?? '',
                                 });
 
-                                Navigator.push(
-                                  context,
+                                if (!mounted) return;
+
+                                Navigator.of(this.context).push(
                                   MaterialPageRoute(
                                     builder: (context) => RouteDetails(routeId: routeId),
                                   ),
@@ -293,11 +336,78 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
               ),
             )
           else
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Text('Tap Find Bus to see results on a separate screen'),
               ),
             ),
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[400]!),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'Advertisement',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_isBannerAdReady && _bannerAd != null)
+                  SizedBox(
+                    width: _bannerAd!.size.width.toDouble(),
+                    height: _bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: _bannerAd!),
+                  )
+                else if (_bannerLoadFailed)
+                  Container(
+                    width: double.infinity,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.blue[100],
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Center(
+                      child: Text(
+                        kIsWeb ? 'AdMob is not supported on web' : 'Demo Ad Banner',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.blue[100],
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Loading test banner ad...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       );
     } else {

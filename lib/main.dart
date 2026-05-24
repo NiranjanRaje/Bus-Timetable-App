@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
-import 'package:bus_timetable_app/screens/bus_timetable_home_page.dart';
 import 'package:bus_timetable_app/utils/route_observer.dart';
 import 'package:bus_timetable_app/screens/splash_screen.dart'; 
 
@@ -10,6 +11,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  if (!kIsWeb) {
+    await MobileAds.instance.initialize();
+  }
   runApp(BusTimetableApp());
 }
 
