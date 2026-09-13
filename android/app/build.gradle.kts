@@ -14,7 +14,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.bus_timetable_app"
+    namespace = "com.raje_tech.bus_timetable_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -37,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.your_app_name"
+        applicationId = "com.raje_tech.bus_timetable_app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

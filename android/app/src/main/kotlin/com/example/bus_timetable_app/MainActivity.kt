@@ -1,4 +1,4 @@
-package com.example.bus_timetable_app
+package com.raje_tech.bus_timetable_app
 
 import io.flutter.embedding.android.FlutterActivity
 
