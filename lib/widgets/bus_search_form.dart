@@ -12,14 +12,16 @@ class BusSearchForm extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _BusSearchFormState createState() => _BusSearchFormState();
+  BusSearchFormState createState() => BusSearchFormState();
 }
 
-class _BusSearchFormState extends State<BusSearchForm> {
+class BusSearchFormState extends State<BusSearchForm> {
   late TextEditingController _fromController;
   late TextEditingController _toController;
   bool _hasSavedFrom = false;
   bool _hasSavedTo = false;
+  FocusNode? _fromFocusNode;
+  FocusNode? _toFocusNode;
 
   @override
   void initState() {
@@ -103,8 +105,17 @@ class _BusSearchFormState extends State<BusSearchForm> {
 
 
 
+  void clearAutocompleteFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fromFocusNode?.unfocus();
+      _toFocusNode?.unfocus();
+    });
+  }
+
   @override
   void dispose() {
+    _fromFocusNode?.dispose();
+    _toFocusNode?.dispose();
     _fromController.dispose();
     _toController.dispose();
     super.dispose();
@@ -117,6 +128,8 @@ class _BusSearchFormState extends State<BusSearchForm> {
   }
 
   Future<void> _search() async {
+    FocusScope.of(context).unfocus();
+
     final from = _fromController.text.trim();
     final to = _toController.text.trim();
 
@@ -144,13 +157,18 @@ class _BusSearchFormState extends State<BusSearchForm> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final horizontalPadding = screenWidth < 360 ? 12.0 : (screenWidth < 480 ? 16.0 : 24.0);
+    final innerPadding = screenWidth < 360 ? 14.0 : 20.0;
+    final fieldGap = screenWidth < 360 ? 12.0 : 18.0;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12),
       child: Card(
         elevation: 5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: EdgeInsets.all(innerPadding),
           child: Column(
             children: [
               _buildAutocompleteField(
@@ -159,7 +177,7 @@ class _BusSearchFormState extends State<BusSearchForm> {
                 controller: _fromController,
                 storageKey: 'search_form_from',
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: fieldGap),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -176,14 +194,14 @@ class _BusSearchFormState extends State<BusSearchForm> {
                   const Expanded(child: Divider(color: Colors.blue, thickness: 1.5)),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: fieldGap),
               _buildAutocompleteField(
                 hint: 'To Station',
                 icon: Icons.train_outlined,
                 controller: _toController,
                 storageKey: 'search_form_to',
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: screenWidth < 360 ? 16.0 : 22.0),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -212,9 +230,17 @@ class _BusSearchFormState extends State<BusSearchForm> {
         });
       },
       fieldViewBuilder: (context, fieldController, focusNode, onFieldSubmitted) {
-        // Initialize field controller with master controller value
-        fieldController.text = controller.text;
-        
+        if (storageKey == 'search_form_from') {
+          _fromFocusNode ??= focusNode;
+        } else if (storageKey == 'search_form_to') {
+          _toFocusNode ??= focusNode;
+        }
+
+        // Initialize field controller with master controller value only when needed.
+        if (fieldController.text != controller.text) {
+          fieldController.text = controller.text;
+        }
+
         return TextField(
           controller: fieldController,
           focusNode: focusNode,
