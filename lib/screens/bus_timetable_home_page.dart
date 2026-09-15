@@ -11,19 +11,16 @@ import 'package:bus_timetable_app/screens/route_details.dart';
 import 'package:bus_timetable_app/screens/search_results_page.dart';
 import 'package:bus_timetable_app/utils/route_observer.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:bus_timetable_app/ad_config.dart';
 
 class BusTimetableHomePage extends StatefulWidget {
   @override
   _BusTimetableHomePageState createState() => _BusTimetableHomePageState();
 }
 
-class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteAware {
-  static const String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
-  // ignore: unused_field
-  static const String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
-  // ignore: unused_field
-  static const String _rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
-
+class _BusTimetableHomePageState extends State<BusTimetableHomePage>
+    with RouteAware {
+  final GlobalKey<BusSearchFormState> _searchFormKey = GlobalKey();
   int _selectedIndex = 0;
   List<String> _allStations = [];
   List<Map<String, String>> _recentSelections = [];
@@ -61,7 +58,7 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
 
   void _createBannerAd() {
     _bannerAd = BannerAd(
-      adUnitId: _bannerAdUnitId,
+      adUnitId: AdConfig.bannerUnitId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -87,6 +84,9 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
   @override
   void didPopNext() {
     // Called when coming back to this route (another route was popped)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchFormKey.currentState?.clearAutocompleteFocus();
+    });
     _loadRecentSelections();
   }
 
@@ -105,22 +105,27 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
     if (recentData != null) {
       final decoded = json.decode(recentData);
       if (decoded is List) {
-        final routes = decoded.map<Map<String, String>>((item) {
-          final routeMap = item as Map<String, dynamic>;
-          return {
-            'route_id': routeMap['route_id']?.toString() ?? '',
-            'from': routeMap['from']?.toString() ?? '',
-            'to': routeMap['to']?.toString() ?? '',
-            'time': routeMap['time']?.toString() ?? '',
-            'service_type': routeMap['service_type']?.toString() ?? '',
-            'depot': routeMap['depot']?.toString() ?? '',
-          };
-        }).where((route) {
-          final from = route['from'];
-          final to = route['to'];
-          final routeId = route['route_id'];
-          return (from?.isNotEmpty ?? false) && (to?.isNotEmpty ?? false) && (routeId?.isNotEmpty ?? false);
-        }).toList();
+        final routes = decoded
+            .map<Map<String, String>>((item) {
+              final routeMap = item as Map<String, dynamic>;
+              return {
+                'route_id': routeMap['route_id']?.toString() ?? '',
+                'from': routeMap['from']?.toString() ?? '',
+                'to': routeMap['to']?.toString() ?? '',
+                'time': routeMap['time']?.toString() ?? '',
+                'service_type': routeMap['service_type']?.toString() ?? '',
+                'depot': routeMap['depot']?.toString() ?? '',
+              };
+            })
+            .where((route) {
+              final from = route['from'];
+              final to = route['to'];
+              final routeId = route['route_id'];
+              return (from?.isNotEmpty ?? false) &&
+                  (to?.isNotEmpty ?? false) &&
+                  (routeId?.isNotEmpty ?? false);
+            })
+            .toList();
 
         setState(() {
           _recentSelections = routes;
@@ -148,7 +153,9 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
   }
 
   Future<void> _fetchAndCacheStations(int newVersion) async {
-    final snapshot = await FirebaseFirestore.instance.collection('timetable').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('timetable')
+        .get();
     final Set<String> uniqueStations = {};
 
     for (var doc in snapshot.docs) {
@@ -203,17 +210,19 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
     }
 
     // Normalize to list of maps
-    final List<Map<String, String>> normalized = existingList.map<Map<String, String>>((item) {
-      final m = item as Map<String, dynamic>;
-      return {
-        'route_id': m['route_id']?.toString() ?? '',
-        'from': m['from']?.toString() ?? '',
-        'to': m['to']?.toString() ?? '',
-        'time': m['time']?.toString() ?? '',
-        'service_type': m['service_type']?.toString() ?? '',
-        'depot': m['depot']?.toString() ?? '',
-      };
-    }).toList();
+    final List<Map<String, String>> normalized = existingList
+        .map<Map<String, String>>((item) {
+          final m = item as Map<String, dynamic>;
+          return {
+            'route_id': m['route_id']?.toString() ?? '',
+            'from': m['from']?.toString() ?? '',
+            'to': m['to']?.toString() ?? '',
+            'time': m['time']?.toString() ?? '',
+            'service_type': m['service_type']?.toString() ?? '',
+            'depot': m['depot']?.toString() ?? '',
+          };
+        })
+        .toList();
 
     // Remove any existing entry with same route_id and insert new at front
     normalized.removeWhere((item) => item['route_id'] == selection['route_id']);
@@ -234,22 +243,27 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
 
     final decoded = json.decode(recentData);
     if (decoded is List) {
-      final routes = decoded.map<Map<String, String>>((item) {
-        final routeMap = item as Map<String, dynamic>;
-        return {
-          'route_id': routeMap['route_id']?.toString() ?? '',
-          'from': routeMap['from']?.toString() ?? '',
-          'to': routeMap['to']?.toString() ?? '',
-          'time': routeMap['time']?.toString() ?? '',
-          'service_type': routeMap['service_type']?.toString() ?? '',
-          'depot': routeMap['depot']?.toString() ?? '',
-        };
-      }).where((route) {
-        final from = route['from'];
-        final to = route['to'];
-        final routeId = route['route_id'];
-        return (from?.isNotEmpty ?? false) && (to?.isNotEmpty ?? false) && (routeId?.isNotEmpty ?? false);
-      }).toList();
+      final routes = decoded
+          .map<Map<String, String>>((item) {
+            final routeMap = item as Map<String, dynamic>;
+            return {
+              'route_id': routeMap['route_id']?.toString() ?? '',
+              'from': routeMap['from']?.toString() ?? '',
+              'to': routeMap['to']?.toString() ?? '',
+              'time': routeMap['time']?.toString() ?? '',
+              'service_type': routeMap['service_type']?.toString() ?? '',
+              'depot': routeMap['depot']?.toString() ?? '',
+            };
+          })
+          .where((route) {
+            final from = route['from'];
+            final to = route['to'];
+            final routeId = route['route_id'];
+            return (from?.isNotEmpty ?? false) &&
+                (to?.isNotEmpty ?? false) &&
+                (routeId?.isNotEmpty ?? false);
+          })
+          .toList();
 
       setState(() {
         _recentSelections = routes;
@@ -258,6 +272,7 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
   }
 
   Future<void> _search(String from, String to) async {
+    FocusScope.of(context).unfocus();
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -268,6 +283,9 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
         ),
       ),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchFormKey.currentState?.clearAutocompleteFocus();
+    });
     await _loadRecentSelections();
   }
 
@@ -275,75 +293,105 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
     if (_selectedIndex == 0) {
       return Column(
         children: [
-          Flexible(
-            flex: 0,
-            child: BusSearchForm(
-              onSearch: _search,
-              stations: _allStations,
-            ),
-          ),
-          if (_recentSelections.isNotEmpty)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Recently visited route', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: 1,
-                        itemBuilder: (context, index) {
-                          final route = _recentSelections[index];
-                          final routeText = '${route['from']} → ${route['to']}';
-                          final details = '${route['time']} • ${route['service_type']} • ${route['depot']}';
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            child: ListTile(
-                              title: Text(routeText, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text(details),
-                              trailing: const Icon(Icons.history, size: 16),
-                              onTap: () async {
-                                final routeId = route['route_id'] ?? '';
-                                if (routeId.isEmpty) return;
+                    BusSearchForm(
+                      key: _searchFormKey,
+                      onSearch: _search,
+                      stations: _allStations,
+                    ),
+                    if (_recentSelections.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Recently visited route',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _recentSelections.length,
+                              itemBuilder: (context, index) {
+                                final route = _recentSelections[index];
+                                final routeText = '${route['from']} → ${route['to']}';
+                                final details =
+                                    '${route['time']} • ${route['service_type']} • ${route['depot']}';
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(vertical: 6),
+                                  child: ListTile(
+                                    title: Text(
+                                      routeText,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    subtitle: Text(details),
+                                    trailing: const Icon(Icons.history, size: 16),
+                                    onTap: () async {
+                                      final routeId = route['route_id'] ?? '';
+                                      if (routeId.isEmpty) return;
 
-                                // Ensure this selection becomes the most-recent
-                                await _saveRecentSelection({
-                                  'route_id': routeId,
-                                  'from': route['from'] ?? '',
-                                  'to': route['to'] ?? '',
-                                  'time': route['time'] ?? '',
-                                  'service_type': route['service_type'] ?? '',
-                                  'depot': route['depot'] ?? '',
-                                });
+                                      _searchFormKey.currentState?.clearAutocompleteFocus();
 
-                                if (!mounted) return;
+                                      await _saveRecentSelection({
+                                        'route_id': routeId,
+                                        'from': route['from'] ?? '',
+                                        'to': route['to'] ?? '',
+                                        'time': route['time'] ?? '',
+                                        'service_type': route['service_type'] ?? '',
+                                        'depot': route['depot'] ?? '',
+                                      });
 
-                                Navigator.of(this.context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => RouteDetails(routeId: routeId),
+                                      if (!mounted) return;
+
+                                      await Navigator.of(this.context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              RouteDetails(routeId: routeId),
+                                        ),
+                                      );
+
+                                      if (!mounted) return;
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        _searchFormKey.currentState?.clearAutocompleteFocus();
+                                      });
+                                    },
                                   ),
                                 );
                               },
                             ),
-                          );
-                        },
+                          ],
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: Text('Tap Find Bus to see results on a separate screen'),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
-            )
-          else
-            Expanded(
-              child: Center(
-                child: Text('Tap Find Bus to see results on a separate screen'),
-              ),
             ),
+          ),
           Container(
             width: double.infinity,
-            margin: const EdgeInsets.all(16),
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.grey[200],
@@ -351,6 +399,7 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
               border: Border.all(color: Colors.grey[400]!),
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
                   'Advertisement',
@@ -377,7 +426,9 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
                     ),
                     child: Center(
                       child: Text(
-                        kIsWeb ? 'AdMob is not supported on web' : 'Demo Ad Banner',
+                        kIsWeb
+                            ? 'AdMob is not supported on web'
+                            : 'Demo Ad Banner',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.blue[700],
@@ -428,8 +479,8 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage> with RouteA
             tooltip: 'App Feedback',
             onPressed: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const FeedbackPage())
+                context,
+                MaterialPageRoute(builder: (context) => const FeedbackPage()),
               );
             },
           ),
