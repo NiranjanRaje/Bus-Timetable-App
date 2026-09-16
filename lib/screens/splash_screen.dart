@@ -23,15 +23,16 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue, // Customize background color
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(
-              Icons.directions_bus, // Bus icon
-              size: 100, // Adjust size as needed
-              color: Colors.white, // Customize icon color
+            Image.asset(
+              'assets/app-logo.png',
+              width: 160,
+              height: 160,
+              fit: BoxFit.contain,
             ),
             SizedBox(height: 20),
             Text(
