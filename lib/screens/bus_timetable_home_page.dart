@@ -389,76 +389,36 @@ class _BusTimetableHomePageState extends State<BusTimetableHomePage>
               ),
             ),
           ),
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[400]!),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Advertisement',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
+          if (_isBannerAdReady && _bannerAd != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[400]!),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Advertisement',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                if (_isBannerAdReady && _bannerAd != null)
+                  const SizedBox(height: 8),
                   SizedBox(
                     width: _bannerAd!.size.width.toDouble(),
                     height: _bannerAd!.size.height.toDouble(),
                     child: AdWidget(ad: _bannerAd!),
-                  )
-                else if (_bannerLoadFailed)
-                  Container(
-                    width: double.infinity,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.blue[100],
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Center(
-                      child: Text(
-                        kIsWeb
-                            ? 'AdMob is not supported on web'
-                            : 'Demo Ad Banner',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue[700],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    width: double.infinity,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.blue[100],
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Loading test banner ad...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue[700],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       );
     } else {
